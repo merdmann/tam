@@ -1,0 +1,567 @@
+<!doctype book public "-//OASIS//DTD DocBook V4.2//EN" [
+<!entity gfdl    SYSTEM "gfdl.sgml">
+<!entity gpl     SYSTEM "gpl.sgml">
+]>
+
+<book id="odb"><?dbhtml filename="index.html">
+
+<bookinfo>
+<title>Tutorial</title>
+<subtitle>(Objects) Simple Accounting System</subtitle>
+<subtitle>Version 0.0.1</subtitle>
+<subtitle>Document Revision $Revision: 1.2 $</subtitle>
+<date>$Date: 2007/01/21 08:48:35 $</date>
+<authorgroup>
+<author>
+<firstname>Michael</firstname>
+<surname>Erdmann</surname>
+</author>
+</authorgroup>
+
+<releaseinfo>Version 0.1</releaseinfo>
+
+<editor>
+<firstname>Michael</firstname>
+<surname>Erdmann</surname>
+</editor>
+
+<publisher>
+<publishername>Michael Erdmann</publishername>
+<address><city>Berlin</city></address>
+</publisher>
+
+<printhistory>
+<para>Dec. 2006: Initial Revision</para>
+</printhistory>
+
+<revhistory>
+  <revision>
+     <revnumber>$Revision: 1.2 $</revnumber>
+     <date>$Date: 2007/01/21 08:48:35 $</date>
+     <authorinitials>$Author: merdmann $</authorinitials>
+  </revision>
+</revhistory>
+
+<copyright>
+<year>2003</year>
+<holder>M. Erdmann</holder>
+</copyright>
+<legalnotice>
+   <blockquote><para>
+      Permission is granted to copy, distribute and/or modify this document
+      under the terms of the GNU Free Documentation License, Version 1.1
+      or any later version published by the Free Software Foundation;
+      with no Invariant Sections, with the Front-Cover Texts being 
+      "A Object Persistency for Ada 95".
+      A copy of the license is included in the section entitled "GNU
+      Free Documentation License".
+   </para></blockquote>
+</legalnotice>
+
+</bookinfo>
+
+<preface id="preface"><?dbhtml filename="perface.html">
+   <title>Preface</title>
+   <para>This package is part of the GNADE project hosted 
+   at http://gnade.sourceforge.net.</para>
+
+   <para>The coordination of the development work is done by: 
+      <address>
+      Michael Erdmann
+      <email>Michael.Erdmann@snafu.de</email>
+      </address>
+   </para>
+
+   <para>The GNU Public License (GPL) applies with the following extension to 
+   all software components of this project.</para>
+
+   <para>As a special exception, if other files instantiate generics from GNADE 
+   Ada units, or you link ODB Ada units or libraries with other files to 
+   produce an executable, these units or libraries do not by itself cause 
+   the resulting executable to be 
+   covered by the GNU General Public License. This exception does not however 
+   invalidate any other reasons why the executable file might be covered by 
+   the GNU Public License.</para>
+</preface>
+
+<part id="part1"><?dbhtml filename="part1.html">
+   <title>Introduction</title>
+<chapter id="overview"><?dbhtml filename="overview.html">
+   <title>Overview</title>
+   <para>This directory contains a small technology domonstration for the
+   following technical issues:</para>
+
+   <itemizedlist mark="opencircle">
+      <listitem><para>Representing data objects using Ada 95</para></listitem>
+      <listitem><para>Usage of an SQL based RDBMS to achieve persistency for Ada 95 
+      instances.</para></listitem>
+      <listitem><para>Relations between objects</para></listitem>
+   </itemizedlist>
+
+   <para>The data model used for the demonstration is quite simple.</para>
+
+   <figure>
+       <title>Datamodel of the demonstration</title>
+   <mediaobject>
+      <imageobject>
+      <imagedata fileref="Datamodel.eps" format="eps">
+      </imageobject>
+      <imageobject>
+      <imagedata fileref="Datamodel.gif" format="gif">
+      </imageobject>
+      <textobject>
+      <phrase>Datamode</phrase>
+      </textobject>
+      <caption>
+         <para>The figure above shows all business objects which need to be 
+         present in a normal business world. A person (identified by a name)
+         may have upto N accounts and member of several groups. In turn each
+         group may be assosicated with an account. An account has a title
+         which is used to categorize the account and a ballance value.</para>
+      </caption>
+   </mediaobject>
+
+   <para>This demonstration addresses large information systems which are
+   running algorithms on large databases on a datamodel similar to the one
+   presented here.</para>
+
+   <para>In the example presented here there are three clients which are
+   intended to represent the typical access patterns to the underlying 
+   database.</para>
+
+   <itemizedlist>
+      <listitem><para>A process which inserts large numbers of instances.</para></listitem>
+      <listitem><para>A customer care client which is used to interrogate and 
+          modify the data base for a small number of subscribers.</para></listitem>
+      <listitem><para>A billing run, which runs periodically to agregate costs
+          and creates a bill for each person.</para></listitem>
+   </itemizedlist>
+
+   <sect1>
+      <title>Representing a data model with Ada95</title>
+
+   <para>Implementing an application in Ada 95 which is able to realize the data model
+   as shown in the previous chapter is rather simple, but there some fact of
+   life which make it not so plesant any more:</para>
+
+   <itemizedlist mark="opencircle">
+      <listitem><para>The data has to be made persistent which means when shutting
+           down your application, the computer where the application runs the 
+           data will be available for the next run.</para></listitem>
+      <listitem><para>You can't keep the complete data base in memory
+           because of the number of customers in you database is always 
+           larger then the memory you can affort.</para></listitem>
+      <listitem><para>Typically processes requiring such data will run on
+           different network elements because different users may nned to 
+           access the data at different times or in paralel.</para></listitem>
+      <listitem><para>Availability of the application has to be assured</para></listitem> 
+   </itemizedlist>
+
+   <para>Persistency of data is achived by storing objects on magnetic discs.
+   The only trick is now to combine the life cycle of an Ada 95 object with 
+   persistency. The life cycle of an instance of a given type is typically 
+   like this:</para>
+
+   <itemizedlist>
+      <listitem><para>Instanciation.</para></listitem>
+      <listitem><para>Modifcation</para></listitem>
+      <listitem><para>Storing</para></listitem>
+      <listitem><para>Disposal</para></listitem>
+   </itemizedlist>
+
+   <para>As shown in the example below instanciation is done by means of an
+   declaration of the instance Father which has default values. The object
+   is automatically disposed upon leaving the body of the procedure 
+   Demo.</para>
+   <example><title>Object persistency; how it could look like</title>
+   <programlisting>
+   procedure Demo(Name : in String) is
+   ...
+      Father  : Person.Object := Lookup_Person( name )
+   begin
+      Father.Age := .... ;
+
+   end Demo;
+   </programlisting>
+   </example>
+   <para>We could imagine a seamless integration by assuming there is a lookup
+   procedure called Lookup_Person which retrieves the instance from the
+   database. The idea looks some what fine, but you have to write for each 
+   type a specifc lookup procedure which has to be done anyway.</para>
+   <para>Ada 95 provides the possibility to declare a type as child of
+   Ada.Finalization which has the result that at the instanciation and
+   disposal time procedures are called. These could be used write back
+   the object upon disposal.</para>
+
+   <para>This idea looks fine on the first glimps, but it has some major 
+   drawbacks. Using the lookup_Person, how is the exception catched which is 
+   thrown if the oject can't be found. Is seems more favorable to catch 
+   this exception in the context of the procedure above.</para>
+   <para>Writing the object back to the data base is also not a good 
+   idea because is case of an expection you might not wnat to store the 
+   object in the underlying database</para>
+   <para>Persistent objects are not objects with the same lifecycle then 
+   normal variables. When an object has to be read and written back has 
+   to be under the direct control of the control flow. The example below
+   shows how the actual implementation looks like.</para>
+
+   <example><title>Life cycle of an persistent object</title>
+   <programlisting>
+   procedure Demo(Name : in String) is
+   ...
+      Father  : Person.Object 
+      Key     : Key_Type.Object := Lookup_Person( Name );
+   begin
+      T := Begin_Transaction;
+
+      Get_Object( Father, Key );
+
+      Father.Age := .... ;
+
+      Put_Object( Father, Key );
+
+      Commit(T);
+
+   exception
+      when xxxx => 
+         .. remove side effects
+         Abort(T);
+   end Demo;
+   </programlisting>
+   </example>
+
+   <para> Each object of the data model is represented by data type which is derived
+   from the type Persistent.Object which implements the basic functionality to 
+   serialize/deserialize the data instance into a blob which is stored in a
+   database record. In order to retrieve such an instance a so called object 
+   id is used as a retieval key. The key is defined when the objects is
+   instanciated, e.g. in the example below:</para>
+
+   <para>The example above shows the lifecycle of an persistent object. During 
+   declaration of the object the object identifier 1 is assgined to the 
+   instance.
+   The method Get_Object is used retrieve the latest version of the object from
+   the data base. Put_Object writes back a new version of the instance Father.
+   Between Get_Object and Put_Object any modification may be done to the 
+   object by means of Ada 95 constructs.</para>
+
+   <para>The objects package provides an versioning concept, which means after 
+   creating the first instance the operation Put_Object may create a new
+   version of the instance in the database.</para>
+   </sect1> 
+
+   <sect1>
+      <title>Relations between objects</title>
+   <para>Ada 95 provides no means to relate objects to each other except access
+   types. The disadvantage of using pointer are:</para>
+
+   <itemizedlist mark="opencircle">
+      <listitem><para>Pointers can not be stored in a database</para></listitem>
+      <listitem><para>It is easy to go from A to B but it is not possible to 
+      find out what objects are referencing B.</para></listitem>
+   </itemizedlist>
+
+   <para>Relation between the instances A and B in Objects are expressed by
+   three values:</para>
+   <itemizedlist mark="opencircle">
+      <listitem><para>Source object id</para></listitem>
+      <listitem><para>Target object id</para></listitem>
+      <listitem><para>A relation name</para></listitem>
+   </itemizedlist>
+
+   <figure>
+       <title>Modelling Relations between objects</title>
+   <mediaobject>
+      <imageobject>
+      <imagedata fileref="Relations.eps" format="eps">
+      </imageobject>
+      <imageobject>
+      <imagedata fileref="Relations.gif" format="gif">
+      </imageobject>
+      <textobject>
+      <phrase>Relations</phrase>
+      </textobject>
+      <caption>
+         <para>Relations</para>
+      </caption>
+   </mediaobject>
+   </figure>
+
+   <para>Lets assume there is a person instance. This instance may be
+   associated with upto N account instances. This may be expressed by
+   the relation name Has_Account where the source the account is and
+   the target the person instance.</para>   
+
+   </sect1>
+</chapter>
+
+<chapter id="ada95"><?dbhtml filename="ada95.html">
+   <title>Ada 95 realisation</title>
+
+   <para>The demonstration system is implemented in Ada 95 and uses an
+   RDBMS product to store data. The interface between the desmonstration
+   software is implemented via the ODBC interface. Consequently this 
+   requieres the GNADE ODBC bindings.</para>
+
+   <para>Some modules are implemented by using ESQL which is supported
+   by the GNADE esql preprocessor.</para>
+
+   <figure>
+       <title>Software Components</title>
+
+   <mediaobject>
+      <imageobject>
+      <imagedata fileref="Components.eps" format="eps">
+      </imageobject>
+      <imageobject>
+      <imagedata fileref="Components.gif" format="gif">
+      </imageobject>
+      <textobject>
+      <phrase>Datamode</phrase>
+      </textobject>
+      <caption>
+         <para>The picture above shows all software components involved in the 
+         demonmstration.</para>
+      </caption>
+   </mediaobject>
+   </figure>
+
+   <para>The system is based upon a library called libobjects which contains 
+   the interface to the database and all business objects which are to be made
+   persistent.</para>
+   <para>There are three application which make use of the library
+   above:</para>
+
+   <itemizedlist mark="opencircle">
+      <listitem><para>Insert</para>
+      <para>This utility inserts subscriber data sets. This is a batc program
+      which reads in files and creates the given subscribers with there 
+      accounts.</para>
+      </listitem>
+      <listitem><para>Billing</para>
+      <para>This application does a billing run, which means for each
+      subscriber the summ of all accounts is created.</para> 
+      </listitem>
+      <listitem><para>Demo</para>
+      <para>The application demo is an interactive program which 
+      is very much comparable with a customer care 
+      center. It implements lifecycle use cases for subscribers, accounts,
+      groups, account types and ballance types.</para> 
+      </listitem>
+   </itemizedlist>
+
+   <para>A typical business object are the accounts which are assigned to 
+   an owner. Below you find a typical implementation of an package:</para>
+
+   <example><title>Specification of the account class</title>
+   <programlisting>
+   with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+   with Persistent;                        use Persistent;
+
+   package Account is
+
+   Not_Existing : exception;
+
+   type Object is new Persistent.Object with record
+         Title    : Unbounded_String := Null_Unbounded_String;
+         Ballance : Integer := 0;
+      end record;
+
+   procedure Create(
+      Owner : in Persistent.Object'Class;
+      Title : in String;
+      Value : in Integer := 0);
+
+   procedure Display(
+      Acct  : in Object );
+
+   procedure Query(
+      This  : in out Object;
+      Owner : in Persistent.Object'Class;
+      Title : in Unbounded_String );
+
+   end Account;
+   </programlisting>
+   </example>
+   <para>The package specification contains the declaration of the type Object
+   which is an extension of the Persisten.Object type. The attributes are in
+   the public part for simplicity reason. Otherwise getter/setter operations
+   would have been needed.</para>
+   <para>Additionally there are method supporting the basic use cases as e.g. 
+   Create, Display and retrieval.</para>
+
+   <para>The example below shows some of the basic implementation techniques.
+   The account in created and associated with the owner in the procedure 
+   create. The method Put_Object (2) creates the instance in the data base with
+   a object id which has been defined during the instanciation at (1). The 
+   account is associated with the owner at (3).</para>
+   <para>The method Query return the list of accounts which are associated 
+   with the name Has_Account to the given owner object. The account we are 
+   looking for is specified by the title contained in the account This. After 
+   the call is returning, the account this will be identical with the 
+   addressed account. The method Get_Related returns all object ids of the 
+   objects which are related to the owner by Has_Account.</para>
+ 
+   <example><title>Implementation of the account class</title>
+   <programlisting>
+   with Objects;                           use Objects;
+
+   package body Account is
+
+   procedure Create(
+      Owner : in Persistent.Object'Class;
+      Title : in String;
+      Value : in Integer := 0) is
+      Acc   : Account.Object;                            <=== (1)
+   begin
+      Acc.Title := To_Unbounded_String( Title );
+      Acc.Ballance := Value;
+      Put_Object( Acc );                                 <=== (2)
+
+      Relate( Owner, Acc, "Has_Account" );               <=== (3)
+   end Create;
+
+   procedure Query(
+      This   : in out Object;
+      Owner  : in Persistent.Object'Class;
+      Title  : in Unbounded_String ) is
+
+      Acct   : OID_Array_Type( 1..100 );
+      Length : Integer := 0;
+      Found  : Boolean := False;
+   begin
+      Get_Related( OID(Owner), "Has_Account", Acct, Length );   <== (4)
+      for i in 1..Length loop
+         declare
+            A : Account.Object;
+         begin
+            Get_Object(A, ID => Acct(i));
+
+            Found := A.Title = Title;
+            if Found then
+               This := A;
+               exit;
+            end if;
+         end ;
+      end loop;
+
+      if not Found then
+         raise Not_Existing;
+      end if;
+
+   end Query;
+
+   procedure Display(
+      Acct  : in Object ) is
+   begin
+      Put_Line( To_String( Acct.Title ) & " : " & Integer'Image( Acct.Ballance ) );
+   end Display;
+
+   end Account;
+   </programlisting>
+
+   </example>
+   <note><title>Restriction</title>
+   <para>The current implementation does not use transaction, e.g. in case of
+   the create method the object created Put_Object should be deleted 
+   automatically in case the Relate method fails. The currently implementation
+   leaves an unrelated account in the data base.</para>
+   </note>
+
+
+</chapter>
+
+<chapter id="database"><?dbhtml filename="database.html">
+   <title>Database Presentation</title>
+
+   <sect1>
+      <title>Storing Objects in the database</title>
+   <para>Each persistent object is represented in the data base in the 
+   following form:</para>
+
+   <example>
+      <title>Table containing Ada 95 objects</title>
+   <programlisting>
+   TABLE OBJECTS (
+      ID INT ,
+      VERSION INT ,
+      HASH VARBINARY ( 17 ) , PRIMARY KEY ( HASH ) ,
+      CLASS VARCHAR ( 60 ) ,
+      DATA BLOB ( 10000 )
+   );
+   </programlisting>
+   </example>
+
+   <note><title>RDBMS depency</title>
+   <para>Whether a presenation is efficient depends verry much on the 
+   use data base product. It seems with MimerSQL the BLOB is an efficient
+   solution.</para>
+   </note>
+
+   <para>All persistent objects are childs of the the type Persistent.Object. 
+   The image of such objects is stored in the database in a BLOB with the 
+   maximum size of 10_000 octets.</para> 
+
+   <para>There are two criterias to identify objects in the database. The 
+   so called object id and the so called key fingerprint. The object 
+   id is anumber which is calculated when the object is created. 
+   The finger print  is calculated from an Ada 95 object by calculating the 
+   MD5 fingerprint of the image of the object. The finger print (hash) is 
+   used to identify the object based on a key object. The key object is 
+   build containing only the key information, the MD5 fingerprint is 
+   calculated out of it and the object is retierved based on this
+   fingerprint. In case there is not finger print given at creation
+   time, the object is created by calculating the M5 fingerprint from the 
+   object identifier.</para>
+
+   <para>If two instances are identical the finger 
+   print is identical. This is used to implement keyed accesses tolocate 
+   an object from the database.</para>
+   </sect1>
+
+   <sect1>
+      <title>Storing relation information in the database</title>   
+
+   <para>Relations between Ada 95 instances are modeled by means of the table 
+   below:</para>
+
+   <example><title>Table containing relations</title>
+   <programlisting>
+   CREATE TABLE RELATIONS (
+      SOURCE INT ,
+      TARGET INT ,
+      REFNAME VARCHAR ( 60 )
+   );
+   </programlisting>
+   </example>
+   <para>The object is stored in the source field referes to the object with
+   the object id stored in the target.</para>
+   </sect1>
+
+   <sect1>
+      <title>Storing root objects</title>   
+
+      <para>bla bla </para>
+   </sect1>
+</chapter>
+
+<chapter id="limits"><?dbhtml filename="limits.html">
+   <title>Limitations</title>
+
+   <para></para>
+</chapter>
+
+&gfdl
+&gpl</part>
+
+<colophon>
+<para>
+Draft versions of this book were produced with the
+DocBook DSSSL Stylesheets. Final production was
+performed with LaTex and ps2pdf.
+</para>
+<para>The UML diagrams have been produced using ArgoUML (see http://argouml.tigris.org).
+</para>
+</colophon>
+
+</book>

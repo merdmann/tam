@@ -1,0 +1,7 @@
+project Tam is
+
+   for Source_Dirs use (".", "tam", "util");
+   for Library_Name use "tam";
+
+end Tam;
+
