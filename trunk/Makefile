@@ -53,12 +53,11 @@ all :: build
 	gnatmake -P ../tam.gpr
 	
 build:
-	which mkdir
-	mkdir ../build 
+	mkdir -p ../build 
 
 ## ################################################################
 ## clean / build the complete procject
 clean ::
-	gnatclean -X -P ../tam.gpr
+	gnatclean -f -P ../tam.gpr
 	$(RM) -rf *~ *.bak 
-	$(RM) -rf var lib bin
+	$(RM) -rf ../build
