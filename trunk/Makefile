@@ -27,27 +27,13 @@
 # =======
 #
 # default / all  --> builds the complete package
-#
 # clean			 --> cleanup the environemt by deleting all temporary files
+# tamtest		 --> create the test package
 #
-# package        --> build a source package
-#                    Please note, that after this has been executed the complete
-#					 install tree can be found under $VARDIR/$(distname). 
-#                    The inention is that this environment shall be used for 
-#					 verification of the actual package.
-#
-include ./VERSION
-include make.conf
-
-version=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)
-distname=tam-$(version)-src
-ROOT=.
-
-SHELL=bash
-
 .PHONY: dist package label publish 
 
-## ################################################################
+include make.conf
+
 ## create all directories all other environment stuff
 all : build
 	gnatmake -P ../tam.gpr
@@ -58,8 +44,6 @@ build:
 tamtest:
 	gnatmake -P ../tamtest.gpr
 
-
-## ################################################################
 ## clean / build the complete procject
 clean ::
 	gnatclean -f -P ../tam.gpr
