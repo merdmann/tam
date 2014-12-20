@@ -49,15 +49,20 @@ SHELL=bash
 
 ## ################################################################
 ## create all directories all other environment stuff
-all :: build
+all : build
 	gnatmake -P ../tam.gpr
 	
 build:
 	mkdir -p ../build 
 
+tamtest:
+	gnatmake -P ../tamtest.gpr
+
+
 ## ################################################################
 ## clean / build the complete procject
 clean ::
 	gnatclean -f -P ../tam.gpr
+	gnatclean -f -P ../tamtest.gpr
 	$(RM) -rf *~ *.bak 
 	$(RM) -rf ../build
