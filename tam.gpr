@@ -1,0 +1,8 @@
+project Tam is
+
+   for Source_Dirs use ("trunk", "trunk\tam", "trunk\util");
+   for Library_Name use "tam";
+   for Object_Dir use "..\build";
+
+end Tam;
+

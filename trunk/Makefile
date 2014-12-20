@@ -43,54 +43,22 @@ version=$(VERSION_MAJOR).$(VERSION_MINOR).$(VERSION_PATCH)
 distname=tam-$(version)-src
 ROOT=.
 
+SHELL=bash
+
 .PHONY: dist package label publish 
 
 ## ################################################################
 ## create all directories all other environment stuff
-all :: lib bin var
-
+all :: build
+	gnatmake -P ../tam.gpr
 	
-lib var bin:
-	mkdir $@ 
+build:
+	which mkdir
+	mkdir ../build 
 
 ## ################################################################
 ## clean / build the complete procject
-all clean deps :: 
-	$(MAKE) -C./util $@
-
-clean :: 
+clean ::
+	gnatclean -X -P ../tam.gpr
 	$(RM) -rf *~ *.bak 
 	$(RM) -rf var lib bin
-
-## ###############################################################
-## build documentation
-all docs ::
-	$(MAKE) -C./doc all
-
-clean :: 
-	$(MAKE) -C./doc clean
-
-## ################################################################
-## prepare a dstribution and publish it at source forge
-dist :: all
-	$(MAKE) ROOT=./ package
-	$(MAKE) label version=$(version)
-
-package :: 
-	tar cvf $(VARDIR)/gnade.tgz -z --files-from=MANIFEST
-	-mkdir $(VARDIR)/$(distname) 
-	( cd $(VARDIR)/$(distname) && tar xvf ../gnade.tgz )
-	$(MAKE) -C$(VARDIR)/$(distname)/doc ROOT=$(ROOT) all 
-	( cd $(VARDIR) && tar cvf ../$(distname).tgz -z $(distname) ) 
-
-
-$(distname).tgz :: MANIFEST docs
-	tar cvf $(distname).tgz -z --files-from=MANIFEST
-
-label ::
-	svn copy $(SVNROOT)/trunk $(SVNROOT)/tags/$(version) -m "release $(version)"
-
-publish: dist
-	scp  $(distname).tgz  merdmann@frs.sourceforge.net:uploads/$(distname).tgz
-
-
